@@ -16,6 +16,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState(null);
   const [stats, setStats] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [journal, setJournal] = useState([]);
   const [updateMsg, setUpdateMsg] = useState("");
   const [assignId, setAssignId] = useState("");
   const [permId, setPermId] = useState("");
@@ -35,6 +36,7 @@ export default function ProjectDetail() {
         client_notes: r.data.client_notes || "",
       });
     }).catch((e) => setError(e?.response?.data?.error || "Failed to load"));
+    api.get(`/diary/project/${id}`).then((r) => setJournal(r.data)).catch(() => setJournal([]));
     if (user.role === "manager") {
       api.get(`/projects/${id}/stats`).then((r) => setStats(r.data));
       api.get("/users").then((r) => setEmployees(r.data));
@@ -232,6 +234,47 @@ export default function ProjectDetail() {
               </ul>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-header">Journal entries</div>
+        <div className="px-5 pb-5">
+          {journal.length === 0 ? (
+            <div className="text-cyan-300/50 text-sm">No journal entries logged against this project yet.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-cyan-400/70 text-xs text-left">
+                  <th className="pb-2 font-normal">Date</th>
+                  <th className="pb-2 font-normal">Employee</th>
+                  <th className="pb-2 font-normal">Phase</th>
+                  <th className="pb-2 font-normal">Time</th>
+                  <th className="pb-2 font-normal">Location</th>
+                  <th className="pb-2 font-normal">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {journal.map((d) => (
+                  <tr key={d.id} className="hr align-top">
+                    <td className="py-2.5 font-mono text-xs whitespace-nowrap">{d.entry_date}</td>
+                    <td className="py-2.5 whitespace-nowrap">{d.employee_name}</td>
+                    <td className="py-2.5 font-mono text-xs whitespace-nowrap">LP{d.phase_number} — {d.phase_name}</td>
+                    <td className="py-2.5 font-mono text-xs whitespace-nowrap">{d.time_from}–{d.time_to}</td>
+                    <td className="py-2.5 whitespace-nowrap">{d.location}</td>
+                    <td className="py-2.5 text-cyan-300/70">
+                      {d.description || "—"}
+                      {d.file_url && (
+                        <a href={fileUrl(d.file_url)} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline ml-2 text-xs">
+                          file
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

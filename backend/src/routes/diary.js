@@ -85,4 +85,31 @@ router.get("/project/:projectId", requireAuth, async (req, res) => {
   res.json(result.rows);
 });
 
+router.get("/employee/:employeeId", requireAuth, async (req, res) => {
+  const { employeeId } = req.params;
+  if (req.user.role !== "manager" && req.user.id !== employeeId) {
+    return res.status(403).json({ error: "Not allowed" });
+  }
+
+  const { date, project_id } = req.query;
+  const params = [employeeId];
+  let query = `
+    SELECT d.*, p.code AS project_code, p.name AS project_name, ph.name_en AS phase_name, ph.number AS phase_number
+    FROM diary_entries d
+    JOIN projects p ON p.id = d.project_id
+    JOIN project_phases ph ON ph.id = d.phase_id
+    WHERE d.employee_id = $1`;
+  if (date) {
+    params.push(date);
+    query += ` AND d.entry_date = $${params.length}`;
+  }
+  if (project_id) {
+    params.push(project_id);
+    query += ` AND d.project_id = $${params.length}`;
+  }
+  query += " ORDER BY d.entry_date DESC, d.time_from DESC";
+  const result = await pool.query(query, params);
+  res.json(result.rows);
+});
+
 module.exports = router;

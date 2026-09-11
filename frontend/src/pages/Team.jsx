@@ -11,6 +11,8 @@ export default function Team() {
   const [error, setError] = useState("");
   const [qrEmployee, setQrEmployee] = useState(null);
   const [qrImageUrl, setQrImageUrl] = useState(null);
+  const [journalEmployee, setJournalEmployee] = useState(null);
+  const [journalEntries, setJournalEntries] = useState([]);
 
   function load() {
     api.get("/users").then((r) => setEmployees(r.data));
@@ -36,6 +38,14 @@ export default function Team() {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [qrEmployee]);
+
+  useEffect(() => {
+    if (!journalEmployee) {
+      setJournalEntries([]);
+      return;
+    }
+    api.get(`/diary/employee/${journalEmployee.id}`).then((r) => setJournalEntries(r.data));
+  }, [journalEmployee]);
 
   async function registerEmployee(e) {
     e.preventDefault();
@@ -117,6 +127,7 @@ export default function Team() {
                   <th className="pb-2 font-normal">Vacation</th>
                   <th className="pb-2 font-normal">Status</th>
                   <th className="pb-2 font-normal">QR</th>
+                  <th className="pb-2 font-normal">Journal</th>
                   <th className="pb-2 font-normal"></th>
                 </tr>
               </thead>
@@ -133,6 +144,9 @@ export default function Team() {
                     </td>
                     <td className="py-2">
                       <button className="btn text-xs py-1" onClick={() => setQrEmployee(e)}>view</button>
+                    </td>
+                    <td className="py-2">
+                      <button className="btn text-xs py-1" onClick={() => setJournalEmployee(e)}>view</button>
                     </td>
                     <td className="py-2">
                       <button className="text-xs text-cyan-300/60 hover:text-cyan-300 underline" onClick={() => toggleActive(e)}>
@@ -156,6 +170,45 @@ export default function Team() {
             <div className="text-cyan-300/50 text-sm">Loading...</div>
           )}
           <button className="btn text-xs mt-3" onClick={() => setQrEmployee(null)}>Close</button>
+        </div>
+      )}
+
+      {journalEmployee && (
+        <div className="panel">
+          <div className="panel-header">
+            <span>{journalEmployee.full_name} — journal</span>
+            <button className="btn text-xs" onClick={() => setJournalEmployee(null)}>Close</button>
+          </div>
+          <div className="px-5 pb-5">
+            {journalEntries.length === 0 ? (
+              <div className="text-cyan-300/50 text-sm">No journal entries yet.</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-cyan-400/70 text-xs text-left">
+                    <th className="pb-2 font-normal">Date</th>
+                    <th className="pb-2 font-normal">Project</th>
+                    <th className="pb-2 font-normal">Phase</th>
+                    <th className="pb-2 font-normal">Time</th>
+                    <th className="pb-2 font-normal">Location</th>
+                    <th className="pb-2 font-normal">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {journalEntries.map((d) => (
+                    <tr key={d.id} className="hr align-top">
+                      <td className="py-2.5 font-mono text-xs whitespace-nowrap">{d.entry_date}</td>
+                      <td className="py-2.5 font-mono text-xs whitespace-nowrap">{d.project_code}</td>
+                      <td className="py-2.5 font-mono text-xs whitespace-nowrap">LP{d.phase_number} — {d.phase_name}</td>
+                      <td className="py-2.5 font-mono text-xs whitespace-nowrap">{d.time_from}–{d.time_to}</td>
+                      <td className="py-2.5 whitespace-nowrap">{d.location}</td>
+                      <td className="py-2.5 text-cyan-300/70">{d.description || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
