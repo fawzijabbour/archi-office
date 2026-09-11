@@ -32,6 +32,7 @@ app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 app.use("/uploads", express.static(UPLOAD_DIR));
 
+app.get("/", (req, res) => res.json({ service: "ArchiOffice API", health: "/api/health" }));
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 
 app.use("/api/auth", authRoutes);

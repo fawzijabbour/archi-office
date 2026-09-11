@@ -30,6 +30,19 @@ async function seed() {
 }
 
 seed().catch((err) => {
-  console.error(err);
+  if (err.code === "ENOTFOUND" && /\.railway\.internal$/.test(err.hostname || "")) {
+    console.error(
+      `Cannot reach ${err.hostname} from outside Railway's network. If you're running this ` +
+      "locally, set DATABASE_URL to the PUBLIC connection string (Postgres service → Connect " +
+      "tab, ends in .proxy.rlwy.net) instead of the internal one."
+    );
+  } else if (err.code === "ECONNREFUSED") {
+    console.error(
+      "Could not connect to the database — DATABASE_URL is missing or points to a database " +
+      "that isn't reachable. Check it's set correctly for wherever this is running."
+    );
+  } else {
+    console.error(err);
+  }
   process.exit(1);
 });
